@@ -70,11 +70,13 @@ from dbt.adapters.bigquery.python_submissions import (
     BigFramesHelper,
 )
 from dbt.adapters.bigquery.relation import BigQueryRelation
+import json
 from dbt.adapters.bigquery.relation_configs import (
     BigQueryBaseRelationConfig,
     BigQueryMaterializedViewConfig,
     PartitionConfig,
 )
+from dbt.adapters.bigquery.relation_configs._privacy import PrivacyPolicyConfig
 from dbt.adapters.bigquery.utility import sql_escape
 
 if TYPE_CHECKING:
@@ -122,6 +124,7 @@ class BigqueryConfig(AdapterConfig):
     submission_method: Optional[str] = None
     notebook_template_id: Optional[str] = None
     enable_change_history: Optional[bool] = None
+    privacy_policy: Optional[Dict[str, Any]] = None
 
 
 class BigQueryAdapter(BaseAdapter):
@@ -835,6 +838,9 @@ class BigQueryAdapter(BaseAdapter):
             raise dbt_common.exceptions.DbtRuntimeError(
                 "`enable_change_history` is not supported for views on BigQuery."
             )
+        if privacy_policy := config.get("privacy_policy"):
+            privacy_policy = PrivacyPolicyConfig.from_dict(privacy_policy)
+            opts["privacy_policy"] = f"'''{json.dumps(privacy_policy.to_dict())}'''"
         return opts
 
     @available.parse(lambda *a, **k: True)
