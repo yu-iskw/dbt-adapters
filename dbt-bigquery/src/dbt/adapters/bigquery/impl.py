@@ -798,6 +798,11 @@ class BigQueryAdapter(BaseAdapter):
     ) -> Dict[str, Any]:
         opts = self.get_common_options(config, node, temporary)
 
+        if config.get("privacy_policy"):
+            raise dbt_common.exceptions.DbtRuntimeError(
+                "`privacy_policy` is only supported for views on BigQuery."
+            )
+
         if config.get("kms_key_name") is not None:
             opts["kms_key_name"] = f"'{config.get('kms_key_name')}'"
 
@@ -840,7 +845,7 @@ class BigQueryAdapter(BaseAdapter):
             )
         if privacy_policy := config.get("privacy_policy"):
             privacy_policy = PrivacyPolicyConfig.from_dict(privacy_policy)
-            opts["privacy_policy"] = f"'''{json.dumps(privacy_policy.to_dict())}'''"
+            opts["privacy_policy"] = f"'{json.dumps(privacy_policy.to_dict())}'"
         return opts
 
     @available.parse(lambda *a, **k: True)
